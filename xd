@@ -1,0 +1,124 @@
+mkdir video-app
+cd video-app
+npm init -y
+npm install express mongoose body-parser cors
+
+video-app/
+|-- client/
+|   |-- public/
+|   |-- src/
+|       |-- components/
+|       |   |-- App.js
+|       |   |-- index.js
+|-- server/
+|   |-- models/
+|       |-- Video.js
+|   |-- routes/
+|       |-- videos.js
+|   |-- app.js
+|-- package.json
+
+// client/src/components/App.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+function App() {
+  const [videos, setVideos] = useState([]);
+
+  useEffect(() => {
+    axios.get('http://localhost:3001/api/videos')
+      .then(response => setVideos(response.data))
+      .catch(error => console.error(error));
+  }, []);
+
+  return (
+    <div>
+      <h1>Video App</h1>
+      <div>
+        {videos.map(video => (
+          <div key={video._id}>
+            <h3>{video.title}</h3>
+            <video width="400" controls>
+              <source src={`http://localhost:3001${video.filePath}`} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+// server/app.js
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const videoRoutes = require('./routes/videos');
+
+const app = express();
+const PORT = 3001;
+
+app.use(cors());
+app.use(bodyParser.json());
+
+mongoose.connect('mongodb://localhost:27017/videoapp', { useNewUrlParser: true, useUnifiedTopology: true });
+
+app.use('/api/videos', videoRoutes);
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+// server/routes/videos.js
+const express = require('express');
+const router = express.Router();
+const Video = require('../models/Video');
+
+router.get('/', async (req, res) => {
+  try {
+    const videos = await Video.find();
+    res.json(videos);
+  } catch (error) {
+    res.json({ message: error.message });
+  }
+});
+
+module.exports = router;
+
+// server/models/Video.js
+const mongoose = require('mongoose');
+
+const videoSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+  },
+  filePath: {
+    type: String,
+    required: true,
+  },
+});
+
+module.exports = mongoose.model('Video', videoSchema);
+
+// server/models/Video.js
+const mongoose = require('mongoose');
+
+const videoSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+  },
+  filePath: {
+    type: String,
+    required: true,
+  },
+});
+
+module.exports = mongoose.model('Video', videoSchema);
+
+
+
